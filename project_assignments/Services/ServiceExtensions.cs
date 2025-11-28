@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 //using Microsoft.EntityFrameworkCore.SqlServer;
 using project_assignments.Infrastructure;
+using project_assignments.Infrastructure.Repository;
 
 namespace project_assignments.Services
 {
@@ -22,7 +23,7 @@ namespace project_assignments.Services
 
         public static void ConfigureRepositoryWrapper(this IServiceCollection services)
         {
-            services.AddScoped<RepositoryWrapper>();
+            services.AddScoped<IRepositoryWrapper, RepositoryWrapper>();
         }
     }
 }
