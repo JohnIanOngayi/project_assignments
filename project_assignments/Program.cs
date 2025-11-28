@@ -4,6 +4,10 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.ConfigureMySqlContext(builder.Configuration);
+
+/// IF MSSQL add connection string in appsettings.json and comment mysql above
+//builder.Services.ConfigureMsSqlContext(builder.Configuration);
+
 builder.Services.ConfigureRepositoryWrapper();
 builder.Services.AddControllersWithViews();
 

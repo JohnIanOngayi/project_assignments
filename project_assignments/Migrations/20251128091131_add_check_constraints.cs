@@ -28,16 +28,35 @@ namespace project_assignments.Migrations
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.Sql(@"
-                ALTER TABLE ProjectAssignments 
-                DROP CONSTRAINT CK_ProjectAssignments_AllocationPercent
-            ");
+            // Detect database provider
+            var isMySql = migrationBuilder.ActiveProvider?.Contains("MySql") ?? false;
 
-            migrationBuilder.Sql(@"
-                ALTER TABLE ProjectAssignments 
-                DROP CONSTRAINT CK_ProjectAssignments_DateRange
-            ");
+            if (isMySql)
+            {
+                // MySQL syntax
+                migrationBuilder.Sql(@"
+                    ALTER TABLE ProjectAssignments 
+                    DROP CHECK CK_ProjectAssignments_AllocationPercent
+                ");
 
+                migrationBuilder.Sql(@"
+                    ALTER TABLE ProjectAssignments 
+                    DROP CHECK CK_ProjectAssignments_DateRange
+                ");
+            }
+            else
+            {
+                // SQL Server syntax
+                migrationBuilder.Sql(@"
+                    ALTER TABLE ProjectAssignments 
+                    DROP CONSTRAINT CK_ProjectAssignments_AllocationPercent
+                ");
+
+                migrationBuilder.Sql(@"
+                    ALTER TABLE ProjectAssignments 
+                    DROP CONSTRAINT CK_ProjectAssignments_DateRange
+                ");
+            }
         }
     }
 }
