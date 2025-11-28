@@ -11,6 +11,11 @@ namespace project_assignments.Infrastructure.Repository
         private IProjectRepository? _projectRepository;
         private IEmployeeRepository? _employeeRepository;
         private IProjectAssignmentRepository? _projectAssignmentRepository;
+
+        public RepositoryWrapper(RepositoryContext repositoryContext)
+        {
+            _repositoryContext = repositoryContext;
+        }
         public IDepartmentRepository Departments
         {
             get

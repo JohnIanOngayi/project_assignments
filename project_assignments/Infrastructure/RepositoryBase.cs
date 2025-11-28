@@ -54,5 +54,32 @@ namespace project_assignments.Infrastructure
         {
             return await DbContext.Set<T>().AsNoTracking().Where(expression).FirstOrDefaultAsync();
         }
+
+        public async Task<IEnumerable<T>> FindAllAsync(params Expression<Func<T, object>>[] includes)
+        {
+            IQueryable<T> query = DbContext.Set<T>();
+
+            foreach (var include in includes) query = query.Include(include);
+
+            return await query.AsNoTracking().ToListAsync();
+        }
+
+        public async Task<IEnumerable<T>> FindByConditionAsync(Expression<Func<T, bool>> expression, params Expression<Func<T, object>>[] includes)
+        {
+            IQueryable<T> query = DbContext.Set<T>().Where(expression);
+
+            foreach (var include in includes) query = query.Include(include);
+
+            return await query.AsNoTracking().ToListAsync();
+        }
+
+        public async Task<T?> FindOneAsync(Expression<Func<T, bool>> expression, params Expression<Func<T, object>>[] includes)
+        {
+            IQueryable<T> query = DbContext.Set<T>().Where(expression);
+
+            foreach (var include in includes) query = query.Include(include);
+
+            return await query.AsNoTracking().FirstOrDefaultAsync();
+        }
     }
 }
