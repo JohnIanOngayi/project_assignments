@@ -1,5 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore.Diagnostics;
-using project_assignments.Infrastructure.Contracts;
+﻿using project_assignments.Infrastructure.Contracts;
 using project_assignments.Infrastructure.Entities;
 
 namespace project_assignments.Infrastructure.Repository

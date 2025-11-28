@@ -49,5 +49,10 @@ namespace project_assignments.Infrastructure
         {
             return CreateAsync(entity);
         }
+
+        public async Task<T?> FindOneAsync(Expression<Func<T, bool>> expression)
+        {
+            return await DbContext.Set<T>().AsNoTracking().Where(expression).FirstOrDefaultAsync();
+        }
     }
 }
