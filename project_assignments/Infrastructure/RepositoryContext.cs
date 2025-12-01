@@ -42,25 +42,26 @@ namespace project_assignments.Infrastructure
                 .HasOne(t => t.Department)
                 .WithMany(d => d.Teams)
                 .HasForeignKey(t => t.DepartmentId)
-                .OnDelete(DeleteBehavior.Restrict);
+                .OnDelete(DeleteBehavior.Cascade);
 
             modelBuilder.Entity<Project>()
                 .HasOne(p => p.Team)
                 .WithMany(t => t.Projects)
                 .HasForeignKey(p => p.TeamId)
-                .OnDelete(DeleteBehavior.Restrict);
+                .OnDelete(DeleteBehavior.Cascade);
 
             modelBuilder.Entity<ProjectAssignment>()
                 .HasOne(pa => pa.Project)
                 .WithMany(p => p.ProjectAssignments)
                 .HasForeignKey(pa => pa.ProjectId)
-                .OnDelete(DeleteBehavior.Restrict);
+                .OnDelete(DeleteBehavior.Cascade);
 
             modelBuilder.Entity<ProjectAssignment>()
                 .HasOne(pa => pa.Employee)
                 .WithMany(e => e.ProjectAssignments)
                 .HasForeignKey(pa => pa.EmployeeId)
-                .OnDelete(DeleteBehavior.Restrict);
+                .OnDelete(DeleteBehavior.Cascade);
+
         }
 
         public override int SaveChanges()

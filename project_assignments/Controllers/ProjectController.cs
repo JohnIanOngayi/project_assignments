@@ -1,20 +1,16 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
-using project_assignments.Infrastructure;
+using project_assignments.Infrastructure.Repository;
 using project_assignments.Models;
 
 namespace project_assignments.Controllers
 {
     public class ProjectController : Controller
     {
-        private readonly RepositoryContext _context;
+        private readonly IRepositoryWrapper _context;
 
-        public ProjectController(RepositoryContext context)
+        public ProjectController(IRepositoryWrapper context)
         {
             _context = context;
         }
@@ -22,33 +18,25 @@ namespace project_assignments.Controllers
         // GET: Project
         public async Task<IActionResult> Index()
         {
-            var repositoryContext = _context.Projects.Include(p => p.Team);
-            return View(await repositoryContext.ToListAsync());
+            List<Project>? projects = await _context.Projects.FindAllAsync(p => p.Team) as List<Project>;
+            return View(projects);
         }
 
         // GET: Project/Details/5
         public async Task<IActionResult> Details(int? id)
         {
-            if (id == null)
-            {
-                return NotFound();
-            }
+            if (id == null) return NotFound();
 
-            var project = await _context.Projects
-                .Include(p => p.Team)
-                .FirstOrDefaultAsync(m => m.ProjectId == id);
-            if (project == null)
-            {
-                return NotFound();
-            }
+            Project? project = await _context.Projects.FindOneAsync(p => p.ProjectId == id, p => p.Team);
+            if (project == null) return NotFound();
 
             return View(project);
         }
 
         // GET: Project/Create
-        public IActionResult Create()
+        public async Task<IActionResult> Create()
         {
-            ViewData["TeamId"] = new SelectList(_context.Teams, "TeamId", "Status");
+            ViewData["TeamId"] = new SelectList(await _context.Teams.FindAllAsync(), "TeamId", "TeamName");
             return View();
         }
 
@@ -61,28 +49,42 @@ namespace project_assignments.Controllers
         {
             if (ModelState.IsValid)
             {
-                _context.Add(project);
+                await _context.Projects.CreateAsync(project);
                 await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
             }
-            ViewData["TeamId"] = new SelectList(_context.Teams, "TeamId", "Status", project.TeamId);
+
+            List<Team>? teams = await _context.Teams.FindAllAsync() as List<Team>;
+
+            var teamList = teams?.Select(team => new
+            {
+                team.TeamId,
+                DisplayText = $"{team.TeamCode} - {team.TeamName}"
+            });
+
+            ViewData["TeamId"] = new SelectList(teamList, "TeamId", "DisplayText", project.TeamId);
+
             return View(project);
         }
 
         // GET: Project/Edit/5
         public async Task<IActionResult> Edit(int? id)
         {
-            if (id == null)
-            {
-                return NotFound();
-            }
+            if (id == null) return NotFound();
 
-            var project = await _context.Projects.FindAsync(id);
-            if (project == null)
+            Project? project = await _context.Projects.FindOneAsync(p => p.ProjectId == id);
+            if (project == null) return NotFound();
+
+            List<Team>? teams = await _context.Teams.FindAllAsync() as List<Team>;
+
+            var teamList = teams?.Select(team => new
             {
-                return NotFound();
-            }
-            ViewData["TeamId"] = new SelectList(_context.Teams, "TeamId", "Status", project.TeamId);
+                team.TeamId,
+                DisplayText = $"{team.TeamCode} - {team.TeamName}"
+            });
+
+            ViewData["TeamId"] = new SelectList(teamList, "TeamId", "DisplayText", project.TeamId);
+
             return View(project);
         }
 
@@ -93,32 +95,32 @@ namespace project_assignments.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(int id, [Bind("ProjectId,ProjectCode,ProjectName,TeamId,IsBillable,Status,StartDate,EndDate,CreatedAt,UpdatedAt")] Project project)
         {
-            if (id != project.ProjectId)
-            {
-                return NotFound();
-            }
+            if (id != project.ProjectId) return NotFound();
 
             if (ModelState.IsValid)
             {
                 try
                 {
-                    _context.Update(project);
+                    await _context.Projects.UpdateAsync(project);
                     await _context.SaveChangesAsync();
                 }
                 catch (DbUpdateConcurrencyException)
                 {
-                    if (!ProjectExists(project.ProjectId))
-                    {
-                        return NotFound();
-                    }
-                    else
-                    {
-                        throw;
-                    }
+                    if (!await ProjectExists(project.ProjectId)) return NotFound();
+                    else throw;
                 }
                 return RedirectToAction(nameof(Index));
             }
-            ViewData["TeamId"] = new SelectList(_context.Teams, "TeamId", "Status", project.TeamId);
+
+            List<Team>? teams = await _context.Teams.FindAllAsync() as List<Team>;
+
+            var teamList = teams?.Select(team => new
+            {
+                team.TeamId,
+                DisplayText = $"{team.TeamCode} - {team.TeamName}"
+            });
+
+            ViewData["TeamId"] = new SelectList(teamList, "TeamId", "DisplayText", project.TeamId);
             return View(project);
         }
 
@@ -130,13 +132,8 @@ namespace project_assignments.Controllers
                 return NotFound();
             }
 
-            var project = await _context.Projects
-                .Include(p => p.Team)
-                .FirstOrDefaultAsync(m => m.ProjectId == id);
-            if (project == null)
-            {
-                return NotFound();
-            }
+            Project? project = await _context.Projects.FindOneAsync(p => p.ProjectId == id, p => p.Team);
+            if (project == null) return NotFound();
 
             return View(project);
         }
@@ -146,19 +143,16 @@ namespace project_assignments.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            var project = await _context.Projects.FindAsync(id);
-            if (project != null)
-            {
-                _context.Projects.Remove(project);
-            }
+            Project? project = await _context.Projects.FindOneAsync(p => p.ProjectId == id);
+            if (project != null) await _context.Projects.DeleteAsync(project);
 
             await _context.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
         }
 
-        private bool ProjectExists(int id)
+        private async Task<bool> ProjectExists(int id)
         {
-            return _context.Projects.Any(e => e.ProjectId == id);
+            return await _context.Projects.ExistsAsync(p => p.ProjectId == id);
         }
     }
 }
